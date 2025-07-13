@@ -48,7 +48,7 @@ const RichTextComposerInput = forwardRef<HTMLDivElement, RichTextComposerInputPr
 				color='default'
 				width='full'
 				minHeight={20}
-				maxHeight={155}
+				// maxHeight={155}
 				rows={1}
 				fontScale='p2'
 				ref={ref}
@@ -61,7 +61,7 @@ const RichTextComposerInput = forwardRef<HTMLDivElement, RichTextComposerInputPr
 				style={{
 					whiteSpace: 'pre-wrap',
 					cursor: 'text',
-					overflowY: 'scroll',
+					// overflowY: 'scroll',
 				}}
 				{...props}
 			/>
