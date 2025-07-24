@@ -270,7 +270,7 @@ const ensureStylesInjected = () => {
 type PopupState = { x: number; y: number } | null;
 
 type AIAction = 'summary' | 'emoji' | 'translation';
-
+let nextSpanId = 0;
 const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement | null => {
 	const [popup, setPopup] = useState<PopupState>(null);
 
@@ -310,15 +310,18 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 	const runAIAction = useCallback(
 		async (type: AIAction) => {
 			const selection = window.getSelection();
-			if (!selection || selection.isCollapsed) {
+			if (!selection || selection.isCollapsed || !contentRef.current) {
 				clearPopup();
 				return;
 			}
 			const range = selection.getRangeAt(0);
 			const selectedText = range.toString();
 
+			// 1. Create a placeholder span with a unique ID, similar to the example
+			const id = ++nextSpanId;
 			const span = document.createElement('span');
 			span.className = `ai-enhancement-transform ai-enhancement-${type}`;
+			span.dataset.id = id.toString(); // Add unique ID
 			span.textContent = selectedText;
 			span.dataset.originalText = selectedText;
 
@@ -330,28 +333,54 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 
 			span.setAttribute('contenteditable', 'false');
 
+			// 2. Simulate the API call with logic from the example
 			const result = await new Promise<string>((resolve) => {
+				let delay: number = 2000;
+				if(type === 'summary') {
+					delay = 15000;
+				} else if(type === 'emoji') {
+					delay = 7000;
+				}
 				setTimeout(() => {
+					let enhancedText = '';
 					switch (type) {
 						case 'summary':
-							resolve(`----------- Summary -----------`);
+						
+							// Replaces the original text with a fixed paragraph
+							enhancedText = `They are working on two projects: \n*  realtime rendering composer \n*  realtime AI enhancements \n\nAnd are making good headways on the projects. Even though it is only mid-term, they already offer us a preview of the work done that we can actually try hands-on. `;
 							break;
 						case 'emoji':
-							resolve(`-----------😊 "${selectedText}" 🤗-----------`);
+							// Modifies the original text with specific replacements
+							enhancedText = selectedText
+								.replace(/exciting/g, 'exciting🚀')
+								.replace(/kick it around/g, 'kick it around 💣')
+								.replace(/don’t forget/g, 'don’t forget 🤔')
+								.replace(/feedback and comments/g, 'feedback and comments 😉👍');
+								
 							break;
 						case 'translation':
 						default:
-							resolve(`----------- Selected text : "${selectedText}" is translated -----------`);
+							// Replaces the original text with a simple placeholder
+							enhancedText = '--Translate--';
+							break;
 					}
-				}, 2000);
+					resolve(enhancedText);
+				}, delay);
 			});
 
+			// Find the correct span using the unique ID before modifying it
+			const elementToUpdate = contentRef.current.querySelector<HTMLSpanElement>(`span[data-id='${id}']`);
+			if (!elementToUpdate) {
+				return;
+			}
+
+			// 3. The rest of the logic (typing effect, adding buttons) remains the same
 			await new Promise<void>((resolveTyping) => {
 				const chars = result.split('');
 				let idx = 0;
-				span.classList.remove('ai-enhancement-transform', `ai-enhancement-${type}`);
+				elementToUpdate.classList.remove('ai-enhancement-transform', `ai-enhancement-${type}`);
 				const interval = setInterval(() => {
-					span.textContent = result.slice(0, idx + 1);
+					elementToUpdate.textContent = result.slice(0, idx + 1);
 					idx += 1;
 					if (idx === chars.length) {
 						clearInterval(interval);
@@ -360,10 +389,10 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 				}, 30);
 			});
 
-			const finalTransformedText = span.textContent;
+			const finalTransformedText = elementToUpdate.textContent;
 
-			span.removeAttribute('contenteditable');
-			span.className = `ai-enhancement-suggestion ai-suggestion-${type}`;
+			elementToUpdate.removeAttribute('contenteditable');
+			elementToUpdate.className = `ai-enhancement-suggestion ai-suggestion-${type}`;
 
 			const actions = document.createElement('span');
 			actions.className = 'ai-suggestion-actions';
@@ -374,9 +403,9 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 			acceptBtn.className = 'accept';
 			acceptBtn.setAttribute('type', 'button');
 			acceptBtn.onclick = () => {
-				if (span.parentNode) {
+				if (elementToUpdate.parentNode) {
 					const textNode = document.createTextNode(finalTransformedText || '');
-					span.parentNode.replaceChild(textNode, span);
+					elementToUpdate.parentNode.replaceChild(textNode, elementToUpdate);
 				}
 			};
 
@@ -385,9 +414,9 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 			rejectBtn.className = 'reject';
 			rejectBtn.setAttribute('type', 'button');
 			rejectBtn.onclick = () => {
-				if (span.parentNode) {
-					const textNode = document.createTextNode(span.dataset.originalText || '');
-					span.parentNode.replaceChild(textNode, span);
+				if (elementToUpdate.parentNode) {
+					const textNode = document.createTextNode(elementToUpdate.dataset.originalText || '');
+					elementToUpdate.parentNode.replaceChild(textNode, elementToUpdate);
 				}
 			};
 
@@ -407,16 +436,15 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 					break;
 			}
 
-			// Create tooltip span like in the buttons
 			const tooltipSpan = document.createElement('span');
 			tooltipSpan.className = 'tooltiptext';
 			tooltipSpan.textContent = tooltipText;
 
-			span.classList.add('tooltip');
-			span.appendChild(actions);
-			span.appendChild(tooltipSpan);
+			elementToUpdate.classList.add('tooltip');
+			elementToUpdate.appendChild(actions);
+			elementToUpdate.appendChild(tooltipSpan);
 		},
-		[clearPopup],
+		[clearPopup, contentRef],
 	);
 
 	if (!popup) {
@@ -429,24 +457,23 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 			style={{ position: 'fixed', top: popup.y, left: popup.x }}
 			onMouseDown={(e) => e.preventDefault()}
 		>
-			<div className="tooltip">
-			<Button small onClick={() => runAIAction('summary')} icon='keyboard' data-tooltip={'AI summarize'} />
-			<span className="tooltiptext">AI Translate</span>
+			<div className='tooltip'>
+				<Button small onClick={() => runAIAction('summary')} icon='keyboard' data-tooltip={'AI summarize'} />
+				<span className='tooltiptext'>AI Summary</span>
 			</div>
-			<div className="tooltip">
-			<Button small onClick={() => runAIAction('emoji')} icon='emoji' data-tooltip={'AI emojify'} />
-			<span className="tooltiptext">AI Emojify</span>
+			<div className='tooltip'>
+				<Button small onClick={() => runAIAction('emoji')} icon='emoji' data-tooltip={'AI emojify'} />
+				<span className='tooltiptext'>AI Emojify</span>
 			</div>
-			<div className="tooltip">
-			<Button small onClick={() => runAIAction('translation')} icon='language' data-tooltip={'AI translate'} />
-			<span className="tooltiptext">AI Translate</span>
+			<div className='tooltip'>
+				<Button small onClick={() => runAIAction('translation')} icon='language' data-tooltip={'AI translate'} />
+				<span className='tooltiptext'>AI Translate</span>
 			</div>
 		</div>
 	);
 
 	return createPortal(popupElement, document.body);
 };
-
 // ##################################################################
 // ##                      Storybook Stories                       ##
 // ##################################################################
