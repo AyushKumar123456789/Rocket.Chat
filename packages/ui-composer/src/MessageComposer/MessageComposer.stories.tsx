@@ -217,7 +217,7 @@ border-color: #E4E7EA transparent transparent transparent;
 }
 .tooltip {
 position: relative;
-display: inline-block;
+display: inline;
 z-index: 10000;
 }
 .tooltip .tooltiptext {
@@ -365,7 +365,7 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 			span.removeAttribute('contenteditable');
 			span.className = `ai-enhancement-suggestion ai-suggestion-${type}`;
 
-			const actions = document.createElement('div');
+			const actions = document.createElement('span');
 			actions.className = 'ai-suggestion-actions';
 			actions.setAttribute('contenteditable', 'false');
 
