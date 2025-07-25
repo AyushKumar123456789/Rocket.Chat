@@ -17,16 +17,13 @@ import {
 	MessageComposerHint,
 } from '.';
 
-// ##################################################################
-// ## Full implementation of the useAIEnhancement hook and styles  ##
-// ##################################################################
+// ## Full implementation of the useAIEnhancement hook and styles  
 
 const PULSE_ANIMATION_STYLE = `
 /* ... (existing animation styles) ... */
-@keyframes aiBackgroundPulse {
-  0% { background-color: var(--pulse-color-start); }
-  50% { background-color: var(--pulse-color-end); }
-  100% { background-color: var(--pulse-color-start); }
+@keyframes aiShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
 }
 
 @keyframes aiPopupAnimate {
@@ -41,26 +38,42 @@ const PULSE_ANIMATION_STYLE = `
 }
 .ai-enhancement-transform {
   user-select: none;
-  animation: aiBackgroundPulse 1.5s ease-in-out infinite;
-  margin-left: 1px;
-  margin-right: 1px;
-}
+  color: transparent; /* Keep text hidden during processing */
+  border-radius: 5px;
 
+  /* NEW: Using CSS variables for our new color theme */
+  background-color: var(--ai-glow-base); 
+  background-image: linear-gradient(
+    90deg,
+    var(--ai-glow-base),
+    var(--ai-glow-highlight),
+    var(--ai-glow-base)
+  );
+  background-size: 200% 100%;
+  
+  /* REFINED: A slightly faster animation with a subtle glow */
+  animation: aiShimmer 1.8s ease-in-out infinite;
+  box-shadow: 0 0 15px var(--ai-glow-shadow);
+
+  margin: 0 1px;
+}
 .ai-enhancement-summary {
-  --pulse-color-start: rgba(255, 220, 0, 0.25);
-  --pulse-color-end: rgba(255, 220, 0, 0.45);
+  --ai-glow-base: #EBEBFF;
+  --ai-glow-highlight: #D4D4FF;
+  --ai-glow-shadow: rgba(138, 43, 226, 0.1);
 }
 
 .ai-enhancement-emoji {
-  --pulse-color-start: rgba(0, 200, 255, 0.25);
-  --pulse-color-end: rgba(0, 200, 255, 0.45);
+  --ai-glow-base: #fff9e6;
+  --ai-glow-highlight: #fff3cd;
+  --ai-glow-shadow: rgba(255, 193, 7, 0.15);
 }
 
 .ai-enhancement-translation {
-  --pulse-color-start: rgba(0, 255, 120, 0.25);
-  --pulse-color-end: rgba(0, 255, 120, 0.45);
+  --ai-glow-base: #e9f7ef;
+  --ai-glow-highlight: #d4edda;
+  --ai-glow-shadow: rgba(40, 167, 69, 0.1);
 }
-
 .ai-enhancement-suggestion {
 	position: relative;
 	border-radius: 4px;
@@ -474,9 +487,6 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 
 	return createPortal(popupElement, document.body);
 };
-// ##################################################################
-// ##                      Storybook Stories                       ##
-// ##################################################################
 
 export default {
 	title: 'Components/MessageComposer',
