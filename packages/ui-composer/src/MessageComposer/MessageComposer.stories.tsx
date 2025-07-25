@@ -355,7 +355,7 @@ const useAIEnhancement = (contentRef: RefObject<HTMLDivElement>): ReactElement |
 								.replace(/exciting/g, 'exciting🚀')
 								.replace(/kick it around/g, 'kick it around 💣')
 								.replace(/don’t forget/g, 'don’t forget 🤔')
-								.replace(/feedback and comments/g, 'feedback and comments 😉👍');
+								.replace(/comments you have/g, 'comments you have 😉👍');
 								
 							break;
 						case 'translation':
